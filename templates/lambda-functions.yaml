@@ -274,6 +274,17 @@ Resources:
       Name: PROD
       FunctionName: !Ref cfnSearchPhotosFunction
       FunctionVersion: !GetAtt cfnSearchPhotosVersion.Version
+  
+  cfnPermissionIndexFromS3:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt cfnIndexPhotosFunction.Arn
+      Action:       lambda:InvokeFunction
+      Principal:    s3.amazonaws.com
+      SourceArn:
+        Fn::Sub:
+          - arn:aws:s3:::${Bucket}
+          - { Bucket: !ImportValue cfn-PhotoAlbum-PhotoBucketName }
 
 Outputs:
   IndexFunctionArn:
