@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: "S3 buckets: photo storage & frontend hosting"
+
+Parameters:
+  PhotoBucketSuffix:
+    Type: String
+    Description: Suffix for photo bucket (e.g. \"cloud-computing-homework-3-photos\")
+    Default: "cloud-computing-homework-3-photos"
+  FrontendBucketSuffix:
+    Type: String
+    Description: Suffix for frontend bucket (e.g. \"cloud-computing-homework-3-frontend\")
+    Default: "cloud-computing-homework-3-frontend"
+
+Resources:
+  cfnPhotoStorageBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "cfn-${PhotoBucketSuffix}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls:       true
+        IgnorePublicAcls:      true
+        BlockPublicPolicy:     true
+        RestrictPublicBuckets: true
+
+  cfnFrontendBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "cfn-${FrontendBucketSuffix}"
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument:  error.html
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault: { SSEAlgorithm: AES256 }
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls:       true
+        IgnorePublicAcls:      true
+        BlockPublicPolicy:     false
+        RestrictPublicBuckets: false
+
+  cfnFrontendBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref cfnFrontendBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: PublicReadGetObject
+            Effect: Allow
+            Principal: '*'
+            Action:
+              - s3:GetObject
+            Resource: !Sub 'arn:aws:s3:::${cfnFrontendBucket}/*'
+
+Outputs:
+  cfnPhotoBucketName:
+    Description: Photo storage bucket name
+    Value: !Ref cfnPhotoStorageBucket
+    Export:
+      Name: cfn-PhotoAlbum-PhotoBucketName
+
+  cfnFrontendWebsiteURL:
+    Description: Frontend website URL
+    Value: !GetAtt cfnFrontendBucket.WebsiteURL
+    Export:
+      Name: cfn-PhotoAlbum-FrontendWebsiteURL
